@@ -68,18 +68,16 @@ jobs:
       shell: bash
 
     - name: Install vcpkg (Windows)
-      if: runner.os == 'Windows'  # 或 matrix.os == 'windows-latest'
+      if: ${{ runner.os == 'Windows' }}  # Correct syntax for runner.os
       run: |
         git clone https://github.com/Microsoft/vcpkg.git
         cd vcpkg
         git checkout 2024.07.12
-        .\bootstrap-vcpkg.bat  # Windows 使用 .bat 脚本
-        # 无需 integrate install（GitHub Windows runner 已预装 vcpkg，可选）
-        # .\vcpkg integrate install  # 如果需要集成 MSBuild
-        # 添加到 PATH（临时，当前 job 有效）
-        echo "C:\vcpkg\vcpkg.exe" >> $env:GITHUB_PATH  # 或使用 $env:PATH += ";$(pwd)"
-        where vcpkg  # Windows 等价于 which
-      shell: powershell  # Windows 默认 PowerShell，确保兼容
+        .\bootstrap-vcpkg.bat
+        # Add vcpkg to PATH for the current job
+        echo "$PWD/vcpkg.exe" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        where vcpkg  # Verify vcpkg is in PATH
+      shell: powershell
 
     - name: Verify vcpkg
       run: |
