@@ -54,16 +54,37 @@ jobs:
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
-    - name: install vcpkg
-      run:   |
+    - name: Install vcpkg (Linux)
+      if: runner.os == 'Linux'
+      run: |
         sudo apt update
         git clone https://github.com/Microsoft/vcpkg.git
         cd vcpkg
         git checkout 2024.07.12
         ./bootstrap-vcpkg.sh
         ./vcpkg integrate install
-        sudo ln -s vcpkg /usr/bin
-        which vcpkg
+        sudo ln -s $(pwd)/vcpkg /usr/local/bin/vcpkg  # 推荐 /usr/local/bin，避免权限问题
+        which vcpkg  # 验证安装
+      shell: bash
+
+    - name: Install vcpkg (Windows)
+      if: runner.os == 'Windows'  # 或 matrix.os == 'windows-latest'
+      run: |
+        git clone https://github.com/Microsoft/vcpkg.git
+        cd vcpkg
+        git checkout 2024.07.12
+        .\bootstrap-vcpkg.bat  # Windows 使用 .bat 脚本
+        # 无需 integrate install（GitHub Windows runner 已预装 vcpkg，可选）
+        # .\vcpkg integrate install  # 如果需要集成 MSBuild
+        # 添加到 PATH（临时，当前 job 有效）
+        echo "C:\vcpkg\vcpkg.exe" >> $env:GITHUB_PATH  # 或使用 $env:PATH += ";$(pwd)"
+        where vcpkg  # Windows 等价于 which
+      shell: powershell  # Windows 默认 PowerShell，确保兼容
+
+    - name: Verify vcpkg
+      run: |
+        vcpkg version  # 跨平台验证
+      shell: ${{ runner.os == 'Windows' && 'powershell' || 'bash' }}  # 动态 shell
 
     - name: vcpkg -y
       run: |
