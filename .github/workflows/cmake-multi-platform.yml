@@ -1,6 +1,6 @@
 # This starter workflow is for a CMake project running on multiple platforms. There is a different starter workflow if you just want a single platform.
 # See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-single-platform.yml
-name: CMake on multiple platforms
+name: CMake vcpkg on multiple platforms
 
 on:
   push:
@@ -54,11 +54,27 @@ jobs:
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
+    - name: install vcpkg
+      run:   |
+        sudo apt update
+        git clone https://github.com/Microsoft/vcpkg.git
+        cd vcpkg
+        git checkout 2024.07.12
+        ./bootstrap-vcpkg.sh
+        ./vcpkg integrate install
+        sudo ln -s vcpkg /usr/bin
+        which vcpkg
+
+    - name: vcpkg -y
+      run: |
+        vcpkg install qt
+
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: >
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        -DCMAKE_TOOLCHAIN_FILE=-DCMAKE_TOOLCHAIN_FILE=/home/runner/work/LexicalAnalysisGenerator/LexicalAnalysisGenerator/vcpkg/scripts/buildsystems/vcpkg.cmake
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
