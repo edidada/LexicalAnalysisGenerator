@@ -63,6 +63,7 @@ jobs:
         git checkout 2024.07.12
         ./bootstrap-vcpkg.sh
         ./vcpkg integrate install
+        sudo rm -rf /usr/local/bin/vcpkg
         sudo ln -s $(pwd)/vcpkg /usr/local/bin/vcpkg  # 推荐 /usr/local/bin，避免权限问题
         which vcpkg  # 验证安装
       shell: bash
